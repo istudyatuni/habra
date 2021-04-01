@@ -1,7 +1,23 @@
-import React from 'react'
-import { getToken } from 'habra-auth'
-import { Button, Typography, Grid, Paper, TextField } from '@material-ui/core'
+import React, { useEffect, useState } from 'react'
+import {
+  Button,
+  Typography,
+  Grid,
+  Paper,
+  TextField,
+  IconButton,
+  InputAdornment,
+  OutlinedInput,
+} from '@material-ui/core'
 import makeStyles from '@material-ui/core/styles/makeStyles'
+import { useDispatch } from 'react-redux'
+import { setToken } from 'src/store/actions/user'
+import { FetchingState } from 'src/interfaces'
+import { useHistory } from 'react-router-dom'
+import VisibilityIcon from '@material-ui/icons/Visibility'
+import VisibilityOffIcon from '@material-ui/icons/VisibilityOff'
+import { useSnackbar } from 'notistack'
+import { getToken } from 'habra-auth'
 
 const useStyles = makeStyles((theme) => ({
   root: {},
@@ -40,17 +56,45 @@ const useStyles = makeStyles((theme) => ({
 
 const Login = () => {
   const classes = useStyles()
+  const { enqueueSnackbar } = useSnackbar()
+  const [showPassword, setShowPassword] = useState(false)
+  const [state, setFetchingState] = useState(FetchingState.Idle)
+  const dispatch = useDispatch()
+  const history = useHistory()
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault()
     const email = e.target.email.value
     const password = e.target.password.value
-    getToken(email, password)
-      .then((e) => {
-        console.log(e)
-      })
-      .catch((e) => console.warn(e))
+
+    try {
+      // Set fetching state as fetching for displaying loading spinner
+      setFetchingState(FetchingState.Fetching)
+
+      // Get login data with user's email and password
+      const data = await getToken(email, password)
+
+      dispatch(setToken(data.access_token))
+      setFetchingState(FetchingState.Fetched)
+    } catch (e) {
+      setFetchingState(FetchingState.Error)
+    }
   }
+
+  useEffect(() => {
+    if (state === FetchingState.Fetched) {
+      enqueueSnackbar('Вход успешен!', {
+        variant: 'success',
+        autoHideDuration: 3000,
+      })
+      history.push('/')
+    } else if (state === FetchingState.Error) {
+      enqueueSnackbar('Неверная почта или пароль', {
+        variant: 'error',
+        autoHideDuration: 4000,
+      })
+    }
+  }, [state, history, enqueueSnackbar])
 
   return (
     <form className={classes.root} onSubmit={handleLoginSubmit}>
@@ -63,6 +107,7 @@ const Login = () => {
             <Typography className={classes.inputLabel}>Электропочта</Typography>
             <TextField
               autoFocus
+              autoComplete="email"
               name="email"
               size="small"
               fullWidth
@@ -71,12 +116,23 @@ const Login = () => {
           </Grid>
           <Grid item className={classes.input}>
             <Typography className={classes.inputLabel}>Пароль</Typography>
-            <TextField
-              size="small"
+            <OutlinedInput
+              autoComplete="current-password"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               fullWidth
-              variant="outlined"
+              margin="dense"
+              endAdornment={
+                <InputAdornment position="end" style={{ marginRight: -8 }}>
+                  <IconButton onClick={() => setShowPassword((prev) => !prev)}>
+                    {showPassword ? (
+                      <VisibilityIcon color="disabled" />
+                    ) : (
+                      <VisibilityOffIcon color="disabled" />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              }
             />
           </Grid>
           <Grid item>

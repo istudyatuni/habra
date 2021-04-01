@@ -7,7 +7,7 @@ export const PROFILE_COMPANIES = PROFILE + 'COMPANIES_'
 export const PROFILE_CHILDREN = PROFILE + 'CHILDREN_'
 export const PROFILE_HUBS = PROFILE + 'HUBS_'
 
-export const PROFILE_ARTICLES = ' PROFILE_ARTICLES_'
+export const PROFILE_ARTICLES = 'PROFILE_ARTICLES_'
 
 export interface PromiseItem<T> {
   data: T
@@ -18,7 +18,7 @@ export interface PromiseItem<T> {
 export interface State {
   hubs?: PromiseItem<{
     hubIds: string[]
-    hubRefs: Record<string, Hub.Hub>
+    hubRefs: Record<string, Hub>
     pagesCount: number
   }>
   user?: PromiseItem<UserExtended>
